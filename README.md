@@ -1,195 +1,118 @@
-<div align="center">
+# TidyWin
 
-```
-  ########  ####  ########   ##    ##     ##      ##  ####  ##    ##
-     ##      ##   ##     ##   ##  ##      ##  ##  ##   ##   ###   ##
-     ##      ##   ##     ##    ####       ##  ##  ##   ##   ####  ##
-     ##      ##   ##     ##     ##        ##  ##  ##   ##   ## ## ##
-     ##      ##   ##     ##     ##        ##  ##  ##   ##   ##  ####
-     ##      ##   ##     ##     ##        ##  ##  ##   ##   ##   ###
-     ##     ####  ########      ##         ###  ###   ####  ##    ##
-```
+TidyWin is a collection of small Windows tools for storage cleanup and gaming setup. Each module explains what it changes and keeps its settings or actions reversible where possible.
 
-**Clean, optimize and tweak Windows - safely, transparently, offline.**
+> TidyWin is under development. Review the warnings below before running a script, especially Storage Cleanup's Deep Clean option.
 
-![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
-![Language](https://img.shields.io/badge/built%20with-Batch%20%2F%20PowerShell-1f6feb)
-![Network](https://img.shields.io/badge/network-none-2ea043)
+## Current modules
 
-</div>
-
----
-
-## What is TidyWin?
-
-TidyWin is an open-source toolkit for keeping Windows clean, fast and tidy. It is built as a set of small, independent **modules**. Each one does one job, explains what it will do before it does it, and writes a log of what it did.
-
-The goal is simple: give people the benefit of Windows maintenance and performance tweaking **without** having to trust a mystery `.exe`, copy commands from random forums, or know what every setting means.
-
-Everything is plain script. You can open any file in a text editor and read exactly what it does.
-
-### Principles
-
-- **Safe by default.** The default option never removes anything you could need later. Risky actions are clearly labelled, off by default, and ask for confirmation.
-- **Transparent.** Plain `.bat` / PowerShell, commented, no compiled binaries, no obfuscation.
-- **Offline.** No network connections, no telemetry, no accounts.
-- **Your files stay yours.** Documents, Desktop, Downloads, Pictures, Videos, Music and OneDrive are never touched.
-- **Logged.** Every run writes a log you can read afterwards.
-- **Tell the truth.** Modules say what they skipped or could not do instead of pretending everything worked.
-
----
-
-## Modules
-
-| Module | Status | What it does |
-|---|---|---|
-| [**Storage Cleanup**](#storage-cleanup) | Available | Frees disk space: temp files, caches, shader caches, Recycle Bin, update leftovers, optional restore points |
-| Performance Tweaks | Planned | Safe, reversible performance and responsiveness settings |
-| Startup and Background Apps | Planned | See and trim what starts with Windows |
-| Privacy and Telemetry Settings | Planned | Review and reduce data Windows collects |
-| Debloat | Planned | Optionally remove preinstalled apps you do not use |
-
-The planned modules are ideas, not promises. Ideas and suggestions are welcome - open an issue.
-
----
-
-## Storage Cleanup
-
-`storage-cleanup/TidyWin-StorageCleanup.bat`
-
-Frees disk space in one run. Double-click it, pick a mode, and let it work.
-
-### Quick start
-
-1. Download or clone this repository and **extract it** if it came as a ZIP (the script refuses to run from inside a ZIP).
-2. Double-click `TidyWin-StorageCleanup.bat`.
-3. Click **Yes** on the Windows administrator prompt.
-4. Choose a mode:
-
-| Mode | Best for | What it does |
-|---|---|---|
-| **1 - Standard Clean** (recommended) | Everyone, any time | Cleans temp files and caches. Keeps your restore points and your previous Windows version. |
-| **2 - Deep Clean** | Maximum space | Everything in Standard, **plus** all System Restore points / Shadow Copies and the old `Windows.old` folder. **Cannot be undone.** Asks for confirmation. |
-| **3 - Exit** | Changed your mind | Changes nothing. |
-
-> Tip: close your browsers and games first. Files that are in use cannot be deleted.
-
-### What Standard Clean removes
-
-- User temp folder, Windows temp folder, `INetCache` and app `TempState` folders
-- Recycle Bin (all drives) - **emptied permanently**
-- Shader caches: DirectX, NVIDIA, AMD, Intel (rebuilt automatically by games and apps)
-- Browser caches only: Edge, Chrome, Brave, Firefox - never cookies, history, passwords or bookmarks
-- Windows Update download cache and Delivery Optimization cache
-- Windows Error Reporting files, crash dumps, minidumps and `MEMORY.DMP`
-- Windows Disk Cleanup items: thumbnails, setup and upgrade logs and similar leftovers
-- Old Windows components, using `DISM /StartComponentCleanup` (never `/ResetBase`)
-
-### What Deep Clean adds
-
-- Every System Restore point and Shadow Copy on the Windows drive
-- The previous Windows installation folder (`Windows.old`), if one exists
-
-After a Deep Clean you cannot use System Restore to roll back, or go back to your previous Windows version. Windows creates new restore points on its own afterwards.
-
-### What is never touched
-
-- Documents, Desktop, Downloads, Pictures, Videos, Music, OneDrive
-- Installed programs, settings, saved passwords, cookies, browsing history
-- Prefetch, the WinSxS folder (only DISM may shrink it), the Windows Installer folder, the hibernation file and the page file
-
-### Safety design
-
-- Only empties folders that are listed in the script. The folders themselves are kept, so Windows permissions stay intact.
-- Refuses to empty drive roots, user profile folders, or a `TEMP` variable that does not look like a temp folder.
-- Does not follow junctions or symbolic links.
-- Never closes your programs. Pauses itself if Windows is installing updates.
-- Uses only the real Windows tools: it resets `PATH` and runs from `System32`, so a stray file next to the script cannot be executed with admin rights.
-- Makes no network connections.
-- Writes a log to `C:\ProgramData\TidyWin\Logs\StorageCleanup_<date>_<time>.log`.
-
-### Command line
-
-```bat
-TidyWin-StorageCleanup.bat /standard   :: Standard Clean, no questions asked
-TidyWin-StorageCleanup.bat /deep       :: Deep Clean, no questions asked
-TidyWin-StorageCleanup.bat /help       :: show help
-```
-
-Using `/standard` or `/deep` counts as your confirmation, which makes the script usable from Task Scheduler or other automation.
-
-| Exit code | Meaning |
-|---|---|
-| 0 | Finished |
-| 1 | Unsupported Windows version, or administrator rights were not granted |
-| 2 | Cancelled by the user |
-| 3 | Started from a temporary folder (for example inside a ZIP) |
-
-### Good to know
-
-- **Emptying the Recycle Bin is permanent**, even in Standard mode.
-- **Crash dumps are deleted.** If you are debugging a blue screen, copy them somewhere first.
-- If you have no dedicated graphics card, the NVIDIA and AMD steps simply find nothing and move on.
-- Each step shows an approximate "freed about N MB" figure. Background activity on the PC adds some noise, so treat it as a guide.
-- Results vary: a machine that is already tidy will free very little.
-
----
+| Module | What it does |
+| --- | --- |
+| **Storage Cleanup** — `modules/storage-cleanup/overflow.bat` | Removes selected temporary files, caches, and Windows leftovers. Standard Clean empties the Recycle Bin. Deep Clean can also delete restore points, shadow copies, and `Windows.old`. |
+| **Gaming Mode** — `modules/gaming-mode/afterburner.bat` | Applies a small Windows gaming profile, optionally imports a reversible NVIDIA global profile, and offers a read-only setup report. It is not MSI Afterburner. |
 
 ## Requirements
 
-- Windows 10 (version 1903 or newer) or Windows 11
-- An administrator account (the script asks for permission itself)
-- No internet connection, no installation
+- Windows 10 or Windows 11.
+- Built-in Windows PowerShell 5.1.
+- Administrator approval for the script launchers and the actions they perform.
+- NVIDIA Profile Inspector only if you want the optional NVIDIA settings in Gaming Mode.
 
-Tested so far on Windows 11. Reports from other Windows versions are welcome.
+**Security note:** Windows 10 reached end of support on October 14, 2025. Use a supported Windows release, or an eligible Extended Security Updates program, to continue receiving security fixes. See [Microsoft's Windows 10 support notice](https://support.microsoft.com/en-us/windows/deployment/updates-lifecycle/windows-10-support-has-ended-on-october-14-2025).
 
----
+## Quick start
 
-## Safety and disclaimer
+1. Download or clone the repository, then extract it if you downloaded a ZIP.
+2. Keep the project folders and their files together. Do not run a module directly from inside a ZIP.
+3. Open the module folder and run its `.bat` launcher. Review the menu and warnings before choosing an action.
+4. Keep the generated Gaming Mode state and NVIDIA backup files until you are satisfied with the changes.
 
-TidyWin is provided **as is**, without warranty. It is written to be conservative, but any tool that deletes files or changes system settings carries some risk.
+## Storage Cleanup
 
-Before running any module on a machine you care about:
+Run `modules/storage-cleanup/overflow.bat` and choose a mode:
 
-- Read the script. It is short and commented.
-- Try it first in a virtual machine or **Windows Sandbox**.
-- Make sure you have a backup of anything important.
+- **Standard Clean** removes selected temporary files and caches, shader caches, browser cache files, Windows Update download leftovers, error reports, and selected Windows cleanup items. It empties the Recycle Bin on all drives. Close browsers and games first if you want them to release their cache files.
+- **Deep Clean** does everything in Standard Clean and can permanently remove all System Restore points and Shadow Copies on the system drive, plus the previous Windows installation folder (`Windows.old`). The script displays a separate confirmation before Deep Clean.
 
----
+Deep Clean can remove recovery options and cannot be undone. Check that you do not need restore points or the previous Windows installation before continuing. TidyWin does not use DISM `/ResetBase`.
 
-## Contributing
+The script keeps the cleanup folders themselves and is designed to skip reparse-point directories. It does not target personal folders such as Documents, Desktop, Downloads, Pictures, Videos, or Music. It writes logs under `%ProgramData%\TidyWin\Logs`.
 
-Contributions are welcome, especially:
+## Gaming Mode
 
-- Test results on different Windows versions and hardware
-- Bug reports (please attach the log file from `C:\ProgramData\TidyWin\Logs`)
-- New cleanup locations or tweaks, with a short explanation of why they are safe
+Run `modules/gaming-mode/afterburner.bat`. The menu provides:
 
-Please keep to the principles above: nothing hidden, nothing that touches personal files, and anything risky must be opt-in and clearly labelled.
+- **Apply Gaming Mode:** saves a snapshot, enables Windows Game Mode for the current account, selects the Windows High Performance power plan if it is available, and disables Enhance Pointer Precision. You can separately choose whether to disable Xbox Game Bar capture and background recording.
+- **Restore Saved Settings:** returns supported settings to the snapshot taken before Apply. Restore the active snapshot before applying again.
+- **Check Current Setup:** reports snapshot status, selected Windows preferences, the active power plan, NVIDIA adapter and tool availability, and manual gaming checks. It does not change Windows or NVIDIA configuration. It saves a report log under `%LOCALAPPDATA%\TidyWin\GamingMode\Logs`.
 
-### Line endings
+Apply and Restore request administrator approval and must run under the same Windows account. Some options—HAGS, per-game GPU selection, monitor refresh rate, and Windows 11 windowed-game optimization—are left for you to review in Windows Settings because support and results vary. Manual choices are not reverted by Restore.
 
-Batch files must use Windows (CRLF) line endings or labels can break. The repository includes a `.gitattributes` rule for this:
+### Optional NVIDIA settings
 
-```
-*.bat text eol=crlf
-```
+Gaming Mode can optionally import the included `afterburner-nvidia.nip` preset using NVIDIA Profile Inspector. It first exports a backup of the global NVIDIA profile. The preset sets Power Management Mode to **Prefer maximum performance** and Texture Filtering - Quality to **Quality**. Maximum performance can increase power use, heat, and fan noise. These global settings can affect multiple 3D applications; use per-game profiles for game-specific tuning where possible.
 
----
+NVIDIA Profile Inspector is a separate community-maintained tool and is not bundled with TidyWin. If you choose to use it, follow the setup in `tools/README.md` and download it from its [upstream project](https://github.com/Orbmu2k/nvidiaProfileInspector). The setup check confirms whether the adapter, executable, and preset are present; it does not inspect live NVIDIA driver values.
 
-## Repository layout
+### Manual gaming checks
 
-```
+- On a laptop or hybrid-graphics PC, set each game to **High performance** in Windows Graphics settings if you want it to use the discrete GPU.
+- Enable NVIDIA Reflex inside supported games. NVIDIA recommends in-game Reflex rather than forcing the driver's Ultra Low Latency option for games that support Reflex.
+- Review HAGS only if Windows offers the option for your hardware. Restart after changing it and compare results.
+- Set the monitor to its highest supported refresh rate at the chosen resolution.
+- On Windows 11, review windowed-game optimizations for DirectX 10/11 games played in windowed or borderless mode.
+
+Do not expect a guaranteed FPS increase. Compare the same game, scene, resolution, and graphics settings before and after. Record average FPS and frame-time or 1% low results when available, and repeat the run a few times.
+
+## Safety and security
+
+- These scripts make system changes locally. TidyWin itself does not download or upload data.
+- Storage Cleanup and Gaming Mode require administrator approval for their launchers. Read each prompt; cancel if you are unsure.
+- Deep Clean permanently removes recovery data as described above.
+- Gaming Mode keeps its saved state and logs under `%LOCALAPPDATA%\TidyWin\GamingMode`. Do not delete the saved NVIDIA `.nip` backup before you have finished using Restore.
+- The Gaming Mode launcher runs its bundled PowerShell helper with a process-scoped execution-policy option; it does not change the saved Windows PowerShell execution policy.
+- NVIDIA Profile Inspector is third-party software. TidyWin does not include it or verify its downloaded release. Only obtain it from the upstream project if you choose to use that integration.
+- Review logs before sharing them; they can contain system details, paths, device names, and error messages.
+- The `Docs/TidyWin Script Optimization Research.md` file is draft research, not a safe runbook. The reviewed choices are in `Docs/TidyWin Script Optimization Plan.md`.
+
+For vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
+## Project layout
+
+```text
 TidyWin/
-|-- README.md
-|-- .gitattributes
-|-- LICENSE
-`-- storage-cleanup/
-    `-- TidyWin-StorageCleanup.bat
+├── Docs/
+│   ├── TidyWin Script Optimization Plan.md
+│   └── TidyWin Script Optimization Research.md
+├── modules/
+│   ├── storage-cleanup/
+│   │   └── overflow.bat
+│   └── gaming-mode/
+│       ├── afterburner.bat
+│       ├── afterburner-helper.ps1
+│       └── afterburner-nvidia.nip
+├── tools/
+│   └── README.md
+├── .gitignore
+├── README.md
+└── SECURITY.md
 ```
 
----
+Optional downloads, generated logs, state, and backups are not part of the source tree.
+
+## Possible future work
+
+A graphical Windows Customization tool for supported animation, transparency, color, and taskbar choices is being considered. It is **not included** in the current repository. TidyWin will avoid shell patchers and unsupported tweaks for that feature.
 
 ## License
 
-Add a `LICENSE` file before publishing. The MIT License is a common choice for projects like this.
+This repository currently has no `LICENSE` file. It is publicly viewable, but no open-source reuse or redistribution license has been selected yet.
+
+## References
+
+- [Microsoft: Windows graphics preferences and windowed-game optimizations](https://support.microsoft.com/en-us/windows/hardware/display-graphics/optimizations-for-windowed-games-in-windows-11)
+- [Microsoft: taskbar customization](https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows)
+- [Microsoft: changing monitor refresh rate](https://support.microsoft.com/en-us/windows/hardware/display-graphics/change-the-refresh-rate-on-your-monitor-in-windows)
+- [NVIDIA: Manage 3D Settings reference](https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/3D%20Settings/Manage_3D_Settings_%28reference%29.htm)
+- [NVIDIA: Reflex and low-latency settings](https://www.nvidia.com/en-us/geforce/news/reflex-low-latency-platform/)
+- [NVIDIA Profile Inspector upstream project](https://github.com/Orbmu2k/nvidiaProfileInspector)
